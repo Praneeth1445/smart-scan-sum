@@ -2,30 +2,25 @@ import { useCallback, useState } from 'react';
 import { Upload, FileImage, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface ImageUploadProps {
-  onImageSelect: (base64: string) => void;
-  isProcessing: boolean;
-}
-
-export function ImageUpload({ onImageSelect, isProcessing }: ImageUploadProps) {
+export function ImageUpload({ onImageSelect, isProcessing }) {
   const [isDragging, setIsDragging] = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [preview, setPreview] = useState(null);
 
-  const handleFile = useCallback((file: File) => {
+  const handleFile = useCallback((file) => {
     if (!file.type.startsWith('image/')) {
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const base64 = e.target?.result as string;
+      const base64 = e.target?.result;
       setPreview(base64);
       onImageSelect(base64);
     };
     reader.readAsDataURL(file);
   }, [onImageSelect]);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e) => {
     e.preventDefault();
     setIsDragging(false);
     
@@ -33,7 +28,7 @@ export function ImageUpload({ onImageSelect, isProcessing }: ImageUploadProps) {
     if (file) handleFile(file);
   }, [handleFile]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e) => {
     e.preventDefault();
     setIsDragging(true);
   }, []);
@@ -42,7 +37,7 @@ export function ImageUpload({ onImageSelect, isProcessing }: ImageUploadProps) {
     setIsDragging(false);
   }, []);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = useCallback((e) => {
     const file = e.target.files?.[0];
     if (file) handleFile(file);
   }, [handleFile]);

@@ -1,4 +1,3 @@
-import { MarkEntry } from '@/types/ocr';
 import {
   Table,
   TableBody,
@@ -8,11 +7,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 
-interface MarksTableProps {
-  marks: MarkEntry[];
-}
-
-export function MarksTable({ marks }: MarksTableProps) {
+export function MarksTable({ marks }) {
   return (
     <div className="paper overflow-hidden">
       <Table>

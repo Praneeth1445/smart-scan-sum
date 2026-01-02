@@ -1,12 +1,7 @@
 import { CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface ValidationBadgeProps {
-  isValid: boolean;
-  errors: string[];
-}
-
-export function ValidationBadge({ isValid, errors }: ValidationBadgeProps) {
+export function ValidationBadge({ isValid, errors }) {
   return (
     <div className={cn(
       "flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm",
@@ -29,19 +24,12 @@ export function ValidationBadge({ isValid, errors }: ValidationBadgeProps) {
   );
 }
 
-interface ValidationDetailsProps {
-  calculatedSum: number;
-  writtenTotal: number | null;
-  bubbleTotal: number | null;
-  errors: string[];
-}
-
 export function ValidationDetails({ 
   calculatedSum, 
   writtenTotal, 
   bubbleTotal, 
   errors 
-}: ValidationDetailsProps) {
+}) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-4">
@@ -83,14 +71,7 @@ export function ValidationDetails({
   );
 }
 
-interface ValidationCardProps {
-  label: string;
-  value: number | null;
-  isPrimary?: boolean;
-  matches?: boolean;
-}
-
-function ValidationCard({ label, value, isPrimary, matches }: ValidationCardProps) {
+function ValidationCard({ label, value, isPrimary, matches }) {
   return (
     <div className={cn(
       "p-4 rounded-lg text-center transition-all",
