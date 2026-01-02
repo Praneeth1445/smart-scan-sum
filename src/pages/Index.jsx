@@ -2,14 +2,13 @@ import { useState, useCallback } from 'react';
 import { Scan, Sparkles } from 'lucide-react';
 import { ImageUpload } from '@/components/ImageUpload';
 import { ResultsDisplay } from '@/components/ResultsDisplay';
-import { ExtractedData } from '@/types/ocr';
 import { toast } from 'sonner';
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [extractedData, setExtractedData] = useState(null);
 
-  const handleImageSelect = useCallback(async (base64: string) => {
+  const handleImageSelect = useCallback(async (base64) => {
     setIsProcessing(true);
     setExtractedData(null);
 

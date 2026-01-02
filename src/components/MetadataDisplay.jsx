@@ -1,11 +1,6 @@
-import { ExtractedData } from '@/types/ocr';
 import { FileText, User, BookOpen, Calendar, Hash } from 'lucide-react';
 
-interface MetadataDisplayProps {
-  metadata: ExtractedData['metadata'];
-}
-
-export function MetadataDisplay({ metadata }: MetadataDisplayProps) {
+export function MetadataDisplay({ metadata }) {
   return (
     <div className="paper p-6">
       <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -53,14 +48,7 @@ export function MetadataDisplay({ metadata }: MetadataDisplayProps) {
   );
 }
 
-interface MetadataItemProps {
-  icon?: React.ReactNode;
-  label: string;
-  value: string;
-  fullWidth?: boolean;
-}
-
-function MetadataItem({ icon, label, value, fullWidth }: MetadataItemProps) {
+function MetadataItem({ icon, label, value, fullWidth }) {
   return (
     <div className={fullWidth ? 'md:col-span-2' : ''}>
       <div className="flex items-center gap-2 text-muted-foreground text-sm mb-1">

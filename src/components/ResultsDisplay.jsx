@@ -1,19 +1,14 @@
 import { useRef, useCallback } from 'react';
 import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ExtractedData } from '@/types/ocr';
 import { ValidationBadge, ValidationDetails } from './ValidationBadge';
 import { MarksTable } from './MarksTable';
 import { MetadataDisplay } from './MetadataDisplay';
 import html2canvas from 'html2canvas';
 import { toast } from 'sonner';
 
-interface ResultsDisplayProps {
-  data: ExtractedData;
-}
-
-export function ResultsDisplay({ data }: ResultsDisplayProps) {
-  const resultsRef = useRef<HTMLDivElement>(null);
+export function ResultsDisplay({ data }) {
+  const resultsRef = useRef(null);
 
   const exportAsImage = useCallback(async () => {
     if (!resultsRef.current) return;
