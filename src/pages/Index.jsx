@@ -1,48 +1,78 @@
 import { useState, useCallback } from 'react';
-import { Scan, Sparkles } from 'lucide-react';
+import { Scan, Sparkles, Play } from 'lucide-react';
 import { ImageUpload } from '@/components/ImageUpload';
 import { ResultsDisplay } from '@/components/ResultsDisplay';
 import { toast } from 'sonner';
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [extractedData, setExtractedData] = useState(null);
+  const [pendingImages, setPendingImages] = useState([]);
+  const [results, setResults] = useState([]);
+  const [processedCount, setProcessedCount] = useState(0);
 
-  const handleImageSelect = useCallback(async (base64) => {
+  const handleImagesSelect = useCallback((base64Images) => {
+    setPendingImages(prev => [...prev, ...base64Images]);
+  }, []);
+
+  const processAllImages = useCallback(async () => {
+    if (pendingImages.length === 0) return;
+
     setIsProcessing(true);
-    setExtractedData(null);
+    setResults([]);
+    setProcessedCount(0);
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-extract`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ imageBase64: base64 }),
+    const allResults = [];
+
+    for (let i = 0; i < pendingImages.length; i++) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-extract`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ imageBase64: pendingImages[i] }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to process image');
         }
-      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process image');
+        const data = await response.json();
+        allResults.push({ index: i + 1, data, error: null });
+        setProcessedCount(i + 1);
+      } catch (error) {
+        console.error(`OCR error for image ${i + 1}:`, error);
+        allResults.push({ 
+          index: i + 1, 
+          data: null, 
+          error: error instanceof Error ? error.message : 'Failed to extract data' 
+        });
+        setProcessedCount(i + 1);
       }
-
-      const data = await response.json();
-      setExtractedData(data);
-      
-      if (data.validation?.isValid) {
-        toast.success('Extraction complete - All totals validated successfully!');
-      } else {
-        toast.warning('Extraction complete - Validation errors found');
-      }
-    } catch (error) {
-      console.error('OCR error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to extract data');
-    } finally {
-      setIsProcessing(false);
     }
+
+    setResults(allResults);
+    setIsProcessing(false);
+
+    const successCount = allResults.filter(r => r.data?.validation?.isValid).length;
+    const failCount = allResults.filter(r => r.error).length;
+    const warningCount = allResults.filter(r => r.data && !r.data.validation?.isValid).length;
+
+    if (failCount === 0 && warningCount === 0) {
+      toast.success(`All ${successCount} sheets validated successfully!`);
+    } else {
+      toast.warning(`Processed: ${successCount} valid, ${warningCount} with errors, ${failCount} failed`);
+    }
+  }, [pendingImages]);
+
+  const clearAll = useCallback(() => {
+    setPendingImages([]);
+    setResults([]);
+    setProcessedCount(0);
   }, []);
 
   return (
@@ -57,7 +87,7 @@ const Index = () => {
             <div>
               <h1 className="text-xl font-bold text-foreground">OCR Validator</h1>
               <p className="text-sm text-muted-foreground">
-                Extract & validate exam sheet marks
+                Bulk extract & validate exam sheet marks
               </p>
             </div>
           </div>
@@ -66,29 +96,43 @@ const Index = () => {
 
       {/* Main content */}
       <main className="container py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-8">
           {/* Hero section */}
-          {!extractedData && (
+          {results.length === 0 && (
             <div className="text-center space-y-4 animate-fadeIn">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
                 <Sparkles className="w-4 h-4" />
-                AI-Powered OCR
+                AI-Powered Bulk OCR
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-foreground text-balance">
-                Extract handwritten marks from exam sheets
+                Extract marks from multiple exam sheets
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Upload an exam answer sheet to extract marks, validate totals against 
-                bubble digits, and export the results as an image.
+                Upload multiple exam answer sheets to extract marks, validate totals,
+                and process them all at once.
               </p>
             </div>
           )}
 
           {/* Upload area */}
           <ImageUpload 
-            onImageSelect={handleImageSelect} 
-            isProcessing={isProcessing} 
+            onImagesSelect={handleImagesSelect} 
+            isProcessing={isProcessing}
+            imageCount={pendingImages.length}
           />
+
+          {/* Process button */}
+          {pendingImages.length > 0 && !isProcessing && results.length === 0 && (
+            <div className="flex justify-center">
+              <button
+                onClick={processAllImages}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg gradient-primary text-primary-foreground font-medium hover:opacity-90 transition-opacity"
+              >
+                <Play className="w-5 h-5" />
+                Process {pendingImages.length} Image(s)
+              </button>
+            </div>
+          )}
 
           {/* Processing indicator */}
           {isProcessing && (
@@ -96,18 +140,47 @@ const Index = () => {
               <div className="inline-flex items-center gap-3">
                 <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                 <span className="text-muted-foreground">
-                  Analyzing document with AI...
+                  Processing image {processedCount + 1} of {pendingImages.length}...
                 </span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Extracting text, tables, and validating marks
-              </p>
+              <div className="mt-4 w-full max-w-md mx-auto bg-muted rounded-full h-2 overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${(processedCount / pendingImages.length) * 100}%` }}
+                />
+              </div>
             </div>
           )}
 
           {/* Results */}
-          {extractedData && !isProcessing && (
-            <ResultsDisplay data={extractedData} />
+          {results.length > 0 && !isProcessing && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold">Results ({results.length} sheets)</h3>
+                <button
+                  onClick={clearAll}
+                  className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  Process New Batch
+                </button>
+              </div>
+              
+              {results.map((result) => (
+                <div key={result.index} className="border border-border rounded-lg overflow-hidden">
+                  <div className="bg-muted/50 px-4 py-2 border-b border-border">
+                    <span className="font-medium">Sheet #{result.index}</span>
+                    {result.error && (
+                      <span className="ml-2 text-sm text-destructive">— Error: {result.error}</span>
+                    )}
+                  </div>
+                  {result.data && (
+                    <div className="p-4">
+                      <ResultsDisplay data={result.data} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </main>
