@@ -1,8 +1,9 @@
-import { useState, useCallback } from 'react';
-import { Scan, Sparkles, Play } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { Scan, Sparkles, Play, FileSpreadsheet } from 'lucide-react';
 import { ImageUpload } from '@/components/ImageUpload';
 import { ResultsDisplay } from '@/components/ResultsDisplay';
 import { toast } from 'sonner';
+import { exportResultsToExcel } from '@/utils/exportToExcel';
 
 const Index = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -66,6 +67,15 @@ const Index = () => {
       toast.success(`All ${successCount} sheets validated successfully!`);
     } else {
       toast.warning(`Processed: ${successCount} valid, ${warningCount} with errors, ${failCount} failed`);
+    }
+
+    // Automatically export to Excel after processing
+    try {
+      const filename = exportResultsToExcel(allResults);
+      toast.success(`Excel exported: ${filename}`);
+    } catch (exportError) {
+      console.error('Excel export failed:', exportError);
+      toast.error('Failed to export Excel file');
     }
   }, [pendingImages]);
 
@@ -157,12 +167,28 @@ const Index = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-bold">Results ({results.length} sheets)</h3>
-                <button
-                  onClick={clearAll}
-                  className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                >
-                  Process New Batch
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      try {
+                        exportResultsToExcel(results);
+                        toast.success('Excel exported successfully');
+                      } catch (err) {
+                        toast.error('Export failed');
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Export Excel
+                  </button>
+                  <button
+                    onClick={clearAll}
+                    className="px-4 py-2 text-sm rounded-lg bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    Process New Batch
+                  </button>
+                </div>
               </div>
               
               {results.map((result) => (
